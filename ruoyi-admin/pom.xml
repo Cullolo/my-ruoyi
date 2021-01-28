@@ -78,6 +78,11 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-generator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>text-module</artifactId>
+            <version>4.3.1</version>
+        </dependency>
 
     </dependencies>
 

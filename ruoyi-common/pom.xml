@@ -101,6 +101,13 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
+        <!--单元测试-->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
 </project>
