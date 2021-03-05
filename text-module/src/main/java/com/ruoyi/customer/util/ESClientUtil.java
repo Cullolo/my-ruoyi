@@ -12,11 +12,20 @@ import org.elasticsearch.client.RestHighLevelClient;
  */
 public class ESClientUtil {
     public static RestHighLevelClient getClient() {
-        //创建HttpHost对象
+        /*//创建HttpHost对象
         HttpHost httpHost = new HttpHost("192.168.78.100", 9200);
         //创建RestClientBuilder
         RestClientBuilder builder = RestClient.builder(httpHost);
         //创建RestHighLevelClien对象
-        RestHighLevelClient client = new RestHighLevelClient(builder);
-        return client;
+        RestHighLevelClient client = new RestHighLevelClient(builder);*/
+
+        RestHighLevelClient restClient = new RestHighLevelClient(
+                RestClient.builder(
+                        new HttpHost("192.168.78.100", 9200),
+                        new HttpHost("192.168.78.101", 9200),
+                        new HttpHost("192.168.78.102", 9200)
+                )
+        );
+
+        return restClient;
     }}

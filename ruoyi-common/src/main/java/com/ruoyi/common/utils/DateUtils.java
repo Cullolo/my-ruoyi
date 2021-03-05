@@ -3,6 +3,8 @@ package com.ruoyi.common.utils;
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Date;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
@@ -152,4 +154,36 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
         // long sec = diff % nd % nh % nm / ns;
         return day + "天" + hour + "小时" + min + "分钟";
     }
+
+    /**
+     * @param day 时间
+     * @param time 加几分钟
+     * @return
+     */
+    public static String addDate(String day,int time){
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 24小时制
+        //引号里面个格式也可以是 HH:mm:ss或者HH:mm等等，很随意的，不过在主函数调用时，要和输入的变
+        //量day格式一致
+        Date date = null;
+        try {
+            date = format.parse(day);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        if (date == null)
+            return "";
+        System.out.println("front:" + format.format(date)); //显示输入的日期
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.MINUTE, time);// 24小时制
+        date = cal.getTime();
+        cal = null;
+        return format.format(date);
+    }
+
+    public static void main(String[] args) {
+        String s = addDate("2021-03-05 14:00:00", 2);
+        System.out.println(s);
+    }
+
 }
