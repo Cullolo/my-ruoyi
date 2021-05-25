@@ -1,12 +1,15 @@
 package com.ruoyi.common.utils;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import org.apache.commons.lang3.time.DateFormatUtils;
 
 /**
  * 时间工具类
@@ -156,34 +159,41 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils
     }
 
     /**
-     * @param day 时间
-     * @param time 加几分钟
+     * @param day 时间基数
+     * @param interval 区间
+     * @param type 类型：1为加，2为减，其他的异常
      * @return
      */
-    public static String addDate(String day,int time){
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 24小时制
-        //引号里面个格式也可以是 HH:mm:ss或者HH:mm等等，很随意的，不过在主函数调用时，要和输入的变
-        //量day格式一致
+    public static String addOrDelDate(String day,Integer interval,Integer type){
+
+        long time = interval*60*1000;
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = null;
+        Date afterDate = null;
         try {
-            date = format.parse(day);
+            if(type==1){
+                date = format.parse(day);
+                afterDate = new Date(date .getTime() + time);
+            }else if(type==2){
+                date = format.parse(day);
+                afterDate = new Date(date .getTime() - time);
+            }else {
+                afterDate = null;
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        if (date == null)
-            return "";
-        System.out.println("front:" + format.format(date)); //显示输入的日期
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.MINUTE, time);// 24小时制
-        date = cal.getTime();
-        cal = null;
-        return format.format(date);
+        return format.format(afterDate);
     }
 
+
+
     public static void main(String[] args) {
-        String s = addDate("2021-03-05 14:00:00", 2);
-        System.out.println(s);
+        String ueTime = "1617274037000";
+        LocalDateTime localDateTime = Instant.ofEpochMilli(Long.valueOf(ueTime)).atZone(ZoneOffset.ofHours(8)).toLocalDateTime();
+        String format = localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        System.out.println(format);
+
     }
 
 }

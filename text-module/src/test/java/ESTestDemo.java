@@ -1,7 +1,9 @@
 
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.customer.domain.es.ESErrorResponse;
 import com.ruoyi.customer.domain.es.ESInitData;
@@ -23,12 +25,11 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.junit.Test;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +43,7 @@ public class ESTestDemo {
     public static final RequestOptions COMMON_OPTIONS;
     public static RestHighLevelClient client;
     public static String CONTENT_TYPE = "application/json;charset=UTF-8";
+
     static {
         RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
         COMMON_OPTIONS = builder.build();
@@ -50,6 +52,7 @@ public class ESTestDemo {
 
     /**
      * 判断索引是否存在
+     *
      * @throws IOException
      */
     @Test
@@ -68,7 +71,7 @@ public class ESTestDemo {
 
         RestHighLevelClient client1 = ESClientUtil.getClient();
 
-        SearchRequestBuilder builder = new SearchRequestBuilder((ElasticsearchClient) client1,null);
+        SearchRequestBuilder builder = new SearchRequestBuilder((ElasticsearchClient) client1, null);
         builder.setIndices("criminal_info");
         SearchRequest request = new SearchRequest();
         request.indices("criminal_info");
@@ -87,6 +90,7 @@ public class ESTestDemo {
 
     /**
      * 通过RestHighLevelClient简单查询ES数据
+     *
      * @throws IOException
      */
     @Test
@@ -106,6 +110,7 @@ public class ESTestDemo {
 
     /**
      * 通过httpPost查询ES
+     *
      * @throws IOException
      * @throws URISyntaxException
      */
@@ -127,12 +132,13 @@ public class ESTestDemo {
 
     /**
      * 通过httpGet查询ES，安装sql插件
+     *
      * @throws IOException
      */
     @Test
     public void testSql() throws IOException {
         String sqlUrl = "http://192.168.78.100:9200/_sql";
-        String jsonStr2  = "{\"sql\":\"select team.keyword,avg(salary) from player_info group by team.keyword\"}";
+        String jsonStr2 = "{\"sql\":\"select team.keyword,avg(salary) from player_info group by team.keyword\"}";
         String result = HttpClientUtil.doGet(sqlUrl, jsonStr2, "application/json;charset=UTF-8");
         JSONObject jsonObject = JSONObject.parseObject(result);
         System.out.println(result);
@@ -142,6 +148,7 @@ public class ESTestDemo {
 
     /**
      * 简单伴随分析第一步
+     *
      * @throws IOException
      */
     @Test
@@ -151,23 +158,24 @@ public class ESTestDemo {
         String result = HttpClientUtil.doGet(ESUrl, queryStr, "application/json;charset=UTF-8");
         ESResponse esResponse = JSONObject.parseObject(result, ESResponse.class);
         System.out.println(esResponse.toString());
-        if(null!=esResponse.getTook()){
-            List<Hits.HitContent> hits  = esResponse.getHits().getHits();
+        if (null != esResponse.getTook()) {
+            List<Hits.HitContent> hits = esResponse.getHits().getHits();
             StringBuilder siteBuilder = new StringBuilder();
             for (Hits.HitContent hit : hits) {
                 Object source = hit.get_source();
                 JSONObject jsonObject = JSONObject.parseObject(source.toString());
                 siteBuilder.append(jsonObject.get("site"));
             }
-        }else {
+        } else {
             ESErrorResponse esErrorResponse = JSONObject.parseObject(result, ESErrorResponse.class);
             ESErrorResponse.ErrorMsg.RootCause rootCause = esErrorResponse.getError().getRoot_cause().get(0);
-            System.out.println("查询发生异常:"+rootCause.getType()+"--"+rootCause.getReason());
+            System.out.println("查询发生异常:" + rootCause.getType() + "--" + rootCause.getReason());
         }
     }
 
     /**
      * 简单伴随分析第二步
+     *
      * @throws IOException
      */
     @Test
@@ -185,14 +193,13 @@ public class ESTestDemo {
     public void testESSQL() throws IOException {
         String url = "http://192.168.78.100:9200/criminal_info/_search";
         String paramStr = "{\"query\":{\"match\":{\"name\":\"tom1\"}}}";
-        String result = HttpClientUtil.doPost(url,paramStr,"application/json;charset=UTF-8");
+        String result = HttpClientUtil.doPost(url, paramStr, "application/json;charset=UTF-8");
         System.out.println(result);
 
 
     }
 
     /**
-     *
      * @throws IOException
      */
     @Test
@@ -202,32 +209,34 @@ public class ESTestDemo {
         BufferedReader br = new BufferedReader(isr);*/
         //简写如下
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("D:\\log\\PT_4GZM202103050941.log"), "UTF-8"));
-        String line="";
-        String[] arrs=null;
+        String line = "";
+        String[] arrs = null;
         Map<String, Object> jsonMap = new HashMap<>();
-        int i = 1856;
-        while ((line=br.readLine())!=null) {
-            arrs=line.split(",");
-           jsonMap.put("info",arrs[0]);
-           jsonMap.put("ueTime",arrs[1]);
-           jsonMap.put("siteId",arrs[2]);
-           jsonMap.put("siteName",arrs[3]);
-           jsonMap.put("deviceId",arrs[4]);
-           jsonMap.put("deviceName",arrs[5]);
-           jsonMap.put("imsi",arrs[6]);
-           jsonMap.put("imei",arrs[7]);
-           jsonMap.put("mac",arrs[8].equals("\\N")?"":arrs[8]);
-           jsonMap.put("longitude",arrs[9]);
-           jsonMap.put("latitude",arrs[10]);
-           jsonMap.put("mobileType",arrs[11]);
-           jsonMap.put("mobileNumber",arrs[12].equals("\\N")?"":arrs[12]);
-           jsonMap.put("province",arrs[13].equals("\\N")?"":arrs[13]);
-           jsonMap.put("city",arrs[14].equals("\\N")?"":arrs[14]);
-           jsonMap.put("postCode",arrs[15].equals("\\N")?"":arrs[15]);
-           jsonMap.put("rss",arrs[16]);
-           IndexRequest request = new IndexRequest("person_info","person",i+"").source(jsonMap);
-           client.index(request,COMMON_OPTIONS);
-           i++;
+        int i = 1;
+        while ((line = br.readLine()) != null) {
+            arrs = line.split(",");
+            StringBuilder builder = new StringBuilder(arrs[1]);
+            StringBuilder insert = builder.insert(4, "-").insert(7, "-").insert(10, " ").insert(13, ":").insert(16, ":");
+            jsonMap.put("info", arrs[0]);
+            jsonMap.put("ueTime", insert.toString());
+            jsonMap.put("siteId", arrs[2]);
+            jsonMap.put("siteName", arrs[3]);
+            jsonMap.put("deviceId", arrs[4]);
+            jsonMap.put("deviceName", arrs[5]);
+            jsonMap.put("imsi", arrs[6]);
+            jsonMap.put("imei", arrs[7]);
+            jsonMap.put("mac", arrs[8].equals("\\N") ? "" : arrs[8]);
+            jsonMap.put("longitude", arrs[9]);
+            jsonMap.put("latitude", arrs[10]);
+            jsonMap.put("mobileType", arrs[11]);
+            jsonMap.put("mobileNumber", arrs[12].equals("\\N") ? "" : arrs[12]);
+            jsonMap.put("province", arrs[13].equals("\\N") ? "" : arrs[13]);
+            jsonMap.put("city", arrs[14].equals("\\N") ? "" : arrs[14]);
+            jsonMap.put("postCode", arrs[15].equals("\\N") ? "" : arrs[15]);
+            jsonMap.put("rss", arrs[16]);
+            IndexRequest request = new IndexRequest("person_info", "person", i + "").source(jsonMap);
+            client.index(request, COMMON_OPTIONS);
+            i++;
         }
         br.close();
     }
@@ -235,6 +244,7 @@ public class ESTestDemo {
 
     /**
      * 碰撞分析
+     *
      * @throws IOException
      */
     @Test
@@ -248,9 +258,8 @@ public class ESTestDemo {
         String startDate = "20210-05093700";
         String endDate = "20210305093759";
         String siteId = "P0819TDD40N49";
-        String paramStr = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\""+startDate+"\",\"lt\":\""+endDate+"\"}}},\"must\":{\"match\":{\"siteId\":\""+siteId+"\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
+        String paramStr = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\"" + startDate + "\",\"lt\":\"" + endDate + "\"}}},\"must\":{\"match\":{\"siteId\":\"" + siteId + "\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
         StringBuffer buffer = new StringBuffer();
-
 
 
         String result1 = HttpClientUtil.doGet(url, paramStr, CONTENT_TYPE);
@@ -266,7 +275,7 @@ public class ESTestDemo {
         startDate = "20210305093900";
         endDate = "20210305094159";
         siteId = "P0817FDD03N53";
-        String paramStr2 = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\""+startDate+"\",\"lt\":\""+endDate+"\"}}},\"must\":{\"match\":{\"siteId\":\""+siteId+"\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
+        String paramStr2 = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\"" + startDate + "\",\"lt\":\"" + endDate + "\"}}},\"must\":{\"match\":{\"siteId\":\"" + siteId + "\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
         String result2 = HttpClientUtil.doGet(url, paramStr2, CONTENT_TYPE);
         ESResponse esResponse1 = JSONObject.parseObject(result2, ESResponse.class);
         List<Hits.HitContent> hits1 = esResponse1.getHits().getHits();
@@ -281,17 +290,18 @@ public class ESTestDemo {
         List<String> collect = resultList.stream().collect(Collectors.groupingBy(result -> result.getImsi(), Collectors.counting()))
                 .entrySet().stream().filter(entry -> entry.getValue() > 1)
                 .map(entry -> entry.getKey()).collect(Collectors.toList());
-        collect.stream().forEach(c-> System.out.println("重复出现的imsi==="+c));
+        collect.stream().forEach(c -> System.out.println("重复出现的imsi===" + c));
         //根据imsi筛选重复的数据
-        List<ESInitData> dataList  = new ArrayList<>();;
+        List<ESInitData> dataList = new ArrayList<>();
+        ;
         for (String imsi : collect) {
             for (ESInitData esInitData : resultList) {
-                if(esInitData.getImsi().equals(imsi)){
+                if (esInitData.getImsi().equals(imsi)) {
                     dataList.add(esInitData);
                 }
             }
         }
-        dataList.stream().forEach(d-> System.out.println(d));
+        dataList.stream().forEach(d -> System.out.println(d));
 
     }
 
@@ -304,22 +314,22 @@ public class ESTestDemo {
         String endDate = "20210305235959";
         String imsi = "460111171873932";
         String url = "http://192.168.78.100:9200/person_info/_search";
-        String queryStr = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\""+startDate+"\",\"lt\":\""+endDate+"\"}}},\"must\":{\"match\":{\"imsi\":\""+imsi+"\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
+        String queryStr = "{\"query\":{\"bool\":{\"filter\":{\"range\":{\"ueTime\":{\"gt\":\"" + startDate + "\",\"lt\":\"" + endDate + "\"}}},\"must\":{\"match\":{\"imsi\":\"" + imsi + "\"}}}},\"from\":0,\"size\":10000,\"sort\":{\"ueTime.keyword\":{\"order\":\"desc\"}}}";
         String result = HttpClientUtil.doGet(url, queryStr, CONTENT_TYPE);
         ESResponse esResponse = JSONObject.parseObject(result, ESResponse.class);
         List<Hits.HitContent> hits = esResponse.getHits().getHits();
-        List<Map<String,String>> resulList = new ArrayList<>();
+        List<Map<String, String>> resulList = new ArrayList<>();
         for (Hits.HitContent hit : hits) {
             Object source = hit.get_source();
             ESInitData esInitData = JSONObject.parseObject(source.toString(), ESInitData.class);
-            Map<String,String> resultMap = new HashMap<>();
-            resultMap.put("deviceName",esInitData.getDeviceName());
-            resultMap.put("longitude",esInitData.getLongitude());
-            resultMap.put("latitude",esInitData.getLatitude());
-            resultMap.put("ueTime",esInitData.getUeTime());
+            Map<String, String> resultMap = new HashMap<>();
+            resultMap.put("deviceName", esInitData.getDeviceName());
+            resultMap.put("longitude", esInitData.getLongitude());
+            resultMap.put("latitude", esInitData.getLatitude());
+            resultMap.put("ueTime", esInitData.getUeTime());
             resulList.add(resultMap);
         }
-        resulList.stream().forEach(c-> System.out.println(c));
+        resulList.stream().forEach(c -> System.out.println(c));
     }
 
 
@@ -332,12 +342,12 @@ public class ESTestDemo {
         String url = "http://192.168.78.100:9200/_sql";
         String startDate = "20210201000000";
         String endDate = "20210305235959";
-        String cityArr ="'深圳','温州','阜阳'";
+        String cityArr = "'深圳','温州','阜阳'";
         String queryStr = "";
-        if(cityArr!=null){
-            queryStr = "{\"sql\":\"select * from person_info where ueTime between '"+startDate+"' and '"+endDate+"' and city.keyword in("+cityArr+") group by city.keyword \"}";
-        }else {
-            queryStr = "{\"sql\":\"select * from person_info where ueTime between '"+startDate+"' and '"+endDate+"' group by city.keyword \"}";
+        if (cityArr != null) {
+            queryStr = "{\"sql\":\"select * from person_info where ueTime between '" + startDate + "' and '" + endDate + "' and city.keyword in(" + cityArr + ") group by city.keyword \"}";
+        } else {
+            queryStr = "{\"sql\":\"select * from person_info where ueTime between '" + startDate + "' and '" + endDate + "' group by city.keyword \"}";
         }
         String result = HttpClientUtil.doGet(url, queryStr, CONTENT_TYPE);
         ESResponse esResponse = JSONObject.parseObject(result, ESResponse.class);
@@ -351,9 +361,162 @@ public class ESTestDemo {
         for (Object object : objects) {
             resultList.add(object);
         }
-        resultList.stream().forEach(c-> System.out.println(c));
+        resultList.stream().forEach(c -> System.out.println(c));
 
 
     }
 
+    @Test
+    public void testRepeat() {
+        List<ESInitData> dataList = new ArrayList<>();
+
+        ESInitData initData = new ESInitData();
+        initData.setCity("111");
+        dataList.add(initData);
+
+        ESInitData initData2 = new ESInitData();
+        initData2.setCity("111");
+        dataList.add(initData2);
+
+        ESInitData initData3 = new ESInitData();
+        initData3.setCity("123");
+        dataList.add(initData3);
+
+        ESInitData initData4 = new ESInitData();
+        initData4.setCity("123");
+        dataList.add(initData4);
+
+        ESInitData initData5 = new ESInitData();
+        initData5.setCity("144");
+        dataList.add(initData5);
+
+        List<String> repeatImsiList = dataList.stream().collect(Collectors.groupingBy(result -> result.getCity(), Collectors.counting()))
+                .entrySet().stream().filter(entry -> entry.getValue() > 1)
+                .map(entry -> entry.getKey()).collect(Collectors.toList());
+
+        repeatImsiList.stream().forEach(p -> System.out.println(p));
+
+
+    }
+
+
+    /**
+     * @param day      时间基数
+     * @param interval 区间
+     * @param type     类型：true为加，false为减，其他的异常
+     * @return
+     */
+    public static String addOrDelDate(String day, int interval, boolean type) {
+        long time = interval * 60 * 1000;
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = null;
+        Date afterDate = null;
+        try {
+            if (type) {
+                date = format.parse(day);
+                afterDate = new Date(date.getTime() + time);
+            } else {
+                date = format.parse(day);
+                afterDate = new Date(date.getTime() - time);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return format.format(afterDate);
+    }
+
+
+    @Test
+    public void testDateList() {
+
+        String start = "2021-03-11 00:00:00";
+        String end = "2021-03-15 23:59:59";
+
+        Date startTime = DateUtils.dateTime(DateUtils.YYYY_MM_DD_HH_MM_SS, start);
+        Date endTime = DateUtils.dateTime(DateUtils.YYYY_MM_DD_HH_MM_SS, end);
+
+        List<Date> dates = listDateDays(startTime, endTime);
+       /* List<String> mapList = new ArrayList<>();
+        for (Date date : dates) {
+            String s = DateUtils.dateTime(date);
+            StringBuffer buffer = new StringBuffer(s);
+            StringBuffer s1 = buffer.append(" 00:00:00");
+            StringBuffer s2 = buffer.append(" 23:59:59");
+            Map<String,String>
+        }*/
+
+
+        dates.stream().forEach(p -> System.out.println(DateUtils.dateTime(p)));
+
+
+    }
+
+    @Test
+    public void test22() {
+
+        String str = "20210315235959";
+        StringBuilder builder = new StringBuilder(str);
+        builder.insert(4, "-").insert(7, "-").insert(10, " ").insert(13, ":").insert(16, ":");
+        System.out.println(builder.toString());
+
+
+    }
+
+
+    //两个时间区间中的天数
+    public static List<Date> listDateDays(Date startTime, Date endTime) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startTime);
+        List<Date> dateList = new ArrayList<>();
+        dateList.add(startTime);
+        while (endTime.after(calendar.getTime())) {
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            dateList.add(calendar.getTime());
+        }
+        dateList.remove(dateList.size() - 1);
+        return dateList;
+    }
+
+
+    @Test
+    public void addList(){
+        List<String> list1 = new ArrayList<>();
+        list1.add("a");
+        list1.add("b");
+        list1.add("c");
+        list1.add("a");
+        Map<String,Integer> map = new HashMap<>();
+        for (String imsi1 : list1) {
+            Integer i = 1;
+            if(map.get(imsi1)!=null){
+                i = map.get(imsi1)+1;
+            }
+            map.put(imsi1,i);
+        }
+        List<Map<String,String>> resultList = new ArrayList<>();
+        for(Map.Entry<String,Integer> entry:map.entrySet()){
+            Map<String,String> resultMap = new HashMap<>();
+            resultMap.put("imsi",entry.getKey());
+            resultMap.put("count",String.valueOf(entry.getValue()));
+            resultList.add(resultMap);
+
+        }
+        System.out.println("重复数据："+JSON.toJSONString(map));
+        System.out.println("重复数据："+JSON.toJSONString(resultList));
+
+    }
+
+    @Test
+    public void testTimestamp(){
+        String str = "2021-03-15 00:00:00";
+        Date date = DateUtils.dateTime(DateUtils.YYYY_MM_DD_HH_MM_SS, str);
+        long time = date.getTime();
+        System.out.println(time);
+
+
+    }
+
+
 }
+
+
